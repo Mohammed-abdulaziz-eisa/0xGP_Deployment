@@ -1,0 +1,4 @@
+Bio==1.7.0
+biopython==1.83
+Flask==2.2.2
+Requests==2.31.0

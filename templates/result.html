@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Identify DNA</title>
+</head>
+<body>
+    <h1>Identify DNA</h1>
+    <form action="/identify" method="post" enctype="multipart/form-data">
+        <label for="file">Upload a file:</label><br>
+        <input type="file" id="file" name="file"><br><br>
+        <label for="status">Select status:</label><br>
+        <select id="status" name="status">
+            <option value="missing">Missing</option>
+            <option value="acknowledged">Acknowledged</option>
+            <option value="crime">Crime</option>
+            <option value="disaster">Disaster</option>
+            <option value="all">All</option> <!-- New option for full database search -->
+        </select><br><br>
+        <input type="submit" value="Identify">
+    </form>
+</body>
+</html>
