@@ -95,9 +95,6 @@ def compare():
 # case 2 : DNA Sequence Identification-
 ##########################################################################################################
 
-
-
-
 # Define a generator function to periodically send data to keep the connection alive
 @application.route('/result')
 def result():
@@ -168,8 +165,8 @@ def identify():
                 if similarity_score == similarity_threshold:
                     # Extract match information
                     match_info = {key: entry[key] for key in info_keys if key in entry}
-                    match_info["similarity_percentage"] = similarity_percentage
-                    match_info["match_status"] = "DNA MATCH"
+                    #match_info["similarity_percentage"] = similarity_percentage
+                    #match_info["match_status"] = "DNA MATCH"
                     matches.append(match_info)
                     if similarity_percentage == 100:
                         # Stop the search if a perfect match is found
@@ -179,6 +176,8 @@ def identify():
     if matches:
         response = jsonify({
             "matches": match_info,
+            "similarity_percentage": similarity_percentage,
+            "match_status": "DNA MATCH",
             "message": "Successful identification",
             "statusCode": 200
         })
@@ -191,7 +190,6 @@ def identify():
     # Set the connection header to keep-alive
     response.headers['Connection'] = 'keep-alive'
     return response
-
 
 
 
@@ -248,13 +246,13 @@ def missing():
                 if similarity_percentage >= SIMILARITY_THRESHOLD_CHILD :
                     child_info = {key: entry[key] for key in info_keys if key in entry}
                     potential_children_info.append({
-                        "child_data": child_info,
-                        "similarity_percentage_child": similarity_percentage
+                        "relative_data": child_info
+                        #"similarity_percentage_relative": similarity_percentage
                     })
 
     if match_info:
         main_national_id = match_info.get("national_id")
-        potential_children_info = [child for child in potential_children_info if child["child_data"].get("national_id") != main_national_id]
+        potential_children_info = [child for child in potential_children_info if child["relative_data"].get("national_id") != main_national_id]
 
         if potential_children_info:
             return jsonify({
