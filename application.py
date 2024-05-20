@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, Flask, Response
+from flask import Blueprint, render_template, request, jsonify, Flask
 from typing import Tuple, Dict, Any
 from Bio import pairwise2
 import requests
