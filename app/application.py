@@ -2,8 +2,9 @@ from flask import Blueprint, render_template, request, jsonify, Flask
 from typing import Tuple, Dict, Any
 from Bio import pairwise2
 import requests
+#import awsgi
 
-application = Flask(__name__)
+application = Flask(__name__, template_folder='../templates', static_folder='../static')
 
 API_URL = 'https://dna-testing-system.onrender.com/api/EisaAPI'
 
@@ -99,7 +100,7 @@ def compare():
 @application.route('/result')
 def result():
     return render_template('result.html')
-#IDENTIFICATION
+
 @application.route('/identify', methods=['POST'])
 def identify():
     # Check if 'file' parameter is provided in the request
@@ -276,6 +277,12 @@ def missing():
             "message": "No match found.",
             "statusCode": 404
         }), {'Connection': 'keep-alive'}
+
+
+
+# def lambda_handler(event, context):
+#     return awsgi.response(application, event, context, base64_content_types={"image/png"})
+
 
 if __name__ == "__main__":
     application.run(debug=True)
