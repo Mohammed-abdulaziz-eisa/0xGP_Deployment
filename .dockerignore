@@ -1,0 +1,24 @@
+# Exclude Python bytecode files
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+
+# Exclude SQLite database files
+*.db
+*.sqlite3
+
+# Exclude environment files
+.env
+
+# Exclude system files
+.DS_Store
+
+# Exclude virtual environment directories
+.venv
+
+# Exclude IDE-specific files and directories
+.idea
+
+# Exclude swap files
+*.swp

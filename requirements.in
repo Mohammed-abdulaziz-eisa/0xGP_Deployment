@@ -1,3 +1,5 @@
+# requirements.in
+
 aws-wsgi==0.2.7
 awsgi==0.0.5
 biopython==1.83
@@ -8,7 +10,7 @@ click==8.1.7
 Flask==3.0.3
 httptools==0.6.1
 idna==3.7
-importlib_metadata==7.1.0
+importlib-metadata==7.1.0
 itsdangerous==2.2.0
 Jinja2==3.1.4
 MarkupSafe==2.1.5
