@@ -3,16 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DNA Sequence Comparison</title>
+    <title>Welcome to the DNA Testing System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>DNA Sequence Comparison</h1>
-    <form action="/compare" method="post" enctype="multipart/form-data">
-        <label for="file_a">Upload File A:</label><br>
-        <input type="file" name="file_a" id="file_a"><br><br>
-        <label for="file_b">Upload File B:</label><br>
-        <input type="file" name="file_b" id="file_b"><br><br>
-        <input type="submit" value="Compare">
-    </form>
+    <h1>Welcome to our DNA Testing System</h1>
+    <p>If you need the function, go to this host:</p>
+    <ul>
+        <p>Loacl_api</p>
+        <li><a href="{{ ('identify') }}">Identification Host <p>http://127.0.0.1:5000/identify</p></a></li>
+        <li><a href="{{ ('compare') }}">Comparison Host  <p> http://127.0.0.1:5000/compare</p></a></li>
+        <li><a href="{{ ('missing') }}">Missing Person Search   <p>http://127.0.0.1:5000/missing</p></a></li>
+        <li><a href="{{ ('predict') }}">Model for Paternity Test  <p>http://127.0.0.1:5000/predict</p></a></li>
+    </ul>
 </body>
 </html>

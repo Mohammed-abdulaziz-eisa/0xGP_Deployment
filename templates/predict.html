@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DNA Paternity Test</title>
+</head>
+<body>
+    <h1>Model for Predict DNA Paternity Test</h1>
+    <form id="dna-form" action="/predict" method="post" enctype="multipart/form-data">
+        <label for="file_a">Parent DNA File:</label>
+        <input type="file" id="file_a" name="file_a" accept=".txt" required>
+        <br><br>
+        <label for="file_b">Child DNA File:</label>
+        <input type="file" id="file_b" name="file_b" accept=".txt" required>
+        <br><br>
+        <button type="submit">Submit</button>
+    </form>
+</body>
+</html>
