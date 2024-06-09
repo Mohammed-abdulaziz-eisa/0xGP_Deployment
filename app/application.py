@@ -3,9 +3,22 @@ from typing import Tuple, Dict, Any
 from Bio import pairwise2
 import requests
 #import awsgi
+# from flask import Flask, request, jsonify
+import pickle
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import MaxAbsScaler
+from sklearn.feature_extraction.text import CountVectorizer
+import lightgbm as lgb
+import joblib
+import os
+from scipy.sparse import hstack
+import pickle as pkl
+import traceback as tb
+import threading
+import time
 
 application = Flask(__name__, template_folder='../templates', static_folder='../static')
-
 API_URL = 'https://dna-testing-system.onrender.com/api/EisaAPI'
 
 def needleman_wunsch_similarity(seq1, seq2, match_score=3, mismatch_penalty=-1, gap_penalty=-2):
@@ -46,17 +59,26 @@ def retrieve_api_data(API_URL):
     except Exception as e:
         return {"error": str(e)}
 
+# worker 
 
-
-
+def worker():
+    print("Starting worker")
+    print(threading.current_thread().name)
+    time.sleep(50)
+    print("Exiting worker")
+    
+ # Home page
+@application.route('/')
+def home_page():
+    return render_template('index.html')
+        
 ##########################################################################################################
 # case 1 : DNA Sequence Comparison
 ##########################################################################################################
 
-
-@application.route('/')
-def index():
-    return render_template('index.html')
+@application.route('/compare')
+def compare_page():
+    return render_template('compare.html')
 
 @application.route('/compare', methods=['POST'])
 def compare():
@@ -90,14 +112,12 @@ def compare():
     })
 
 
-
-
 ##########################################################################################################
 # case 2 : DNA Sequence Identification-
 ##########################################################################################################
 
 # Define a generator function to periodically send data to keep the connection alive
-@application.route('/result')
+@application.route('/identify')
 def result():
     return render_template('result.html')
 
@@ -197,6 +217,7 @@ def identify():
 ##########################################################################################################
 # case 3 : DNA Sequence Missing 
 ##########################################################################################################
+
 @application.route('/missing', methods=['GET', 'POST'])
 def missing():
     if request.method == 'GET':
@@ -279,10 +300,135 @@ def missing():
         }), {'Connection': 'keep-alive'}
 
 
+##########################################################################################################
+# case 4 : DNA Paternity Test
+##########################################################################################################
 
-# def lambda_handler(event, context):
-#     return awsgi.response(application, event, context, base64_content_types={"image/png"})
+
+# flask_app/
+# │
+# ├── models/
+# │   ├── random_forest_model.pkl
+# │   └── tfidf_vectorizer.pkl
+# ├   └── scaler.pkl
+# ├── app.py
+# └── requirements.txt
+
+def pickle_deserialize_object(file_path_name):
+    """
+    Deserialize an object from a file using pickle.
+    
+    Args:
+        file_path_name (str): The path and name of the file from which the object will be loaded.
+    
+    Returns:
+        object: The deserialized object. Returns None if deserialization fails.
+    
+    Raises:
+        Exception: If there is any error during the deserialization process.
+    """
+    data_object = None
+    try:
+        with open(file_path_name, "rb") as data_infile:
+            data_object = pkl.load(data_infile)
+    except Exception as e:
+        print(f"Error occurred while deserializing object: {e}")
+        tb.print_exc()
+    return data_object
+#####
+
+# Load models and vectorizers at startup
+try:
+    vectorizer = pickle_deserialize_object("../models/vectorizer.pkl")
+    model = pickle_deserialize_object("../models/finalized_model_lgb.pkl")
+    scaler = pickle_deserialize_object("../models/scaler.pkl")
+except Exception as e:
+    print(f"Error loading model/vectorizer: {e}")
+
+# Helper functions from doctor bonat script 
+def k_mer_words_original(dna_sequence_string, k_mer_length=7):
+    return [dna_sequence_string[x:x + k_mer_length].lower() for x in range(len(dna_sequence_string) - k_mer_length + 1)]
+
+def column_of_words(dna_data_frame, input_column_name, output_column_name):
+    dna_data_frame[output_column_name] = dna_data_frame.apply(lambda x: k_mer_words_original(x[input_column_name]), axis=1)
+    dna_data_frame = dna_data_frame.drop(input_column_name, axis=1)
+    return dna_data_frame
+
+def bag_of_words(word_column, word_ngram):
+    word_list = list(word_column)
+    for item in range(len(word_list)):
+        word_list[item] = ' '.join(word_list[item])
+    count_vectorizer = CountVectorizer(ngram_range=(word_ngram, word_ngram))
+    X = count_vectorizer.fit_transform(word_list)
+    return X
+
+def generate_k_mers(sequence, k):
+    return [sequence[i:i+k] for i in range(len(sequence)-k+1)]
+
+
+
+@application.route('/predict', methods=['GET'])
+def home():
+    return render_template('predict.html')
+
+@application.route('/predict', methods=['POST'])
+  
+def predict():
+
+    if 'file_a' not in request.files or 'file_b' not in request.files:
+        return jsonify({
+            "message": "Please upload a file for both DNA sequences.",
+            "statusCode": 401
+        })
+
+    file_a = request.files['file_a']
+    file_b = request.files['file_b']
+    
+    if file_a.filename == '' or file_b.filename == '':
+        return jsonify({
+            "message": "Please upload non-empty files for both DNA sequences.",
+            "statusCode": 401
+        })
+
+    parent_dna = retrieve_dna_sequence_from_file(file_a)
+    child_dna = retrieve_dna_sequence_from_file(file_b)
+
+    # Generate k-mers
+    k = 7
+    parent_kmers = ' '.join(generate_k_mers(parent_dna, k))
+    child_kmers = ' '.join(generate_k_mers(child_dna, k))
+    
+    # Vectorize sequences
+    try:
+        parent_vector = vectorizer.transform([parent_kmers]).toarray()
+        child_vector = vectorizer.transform([child_kmers]).toarray()
+    except Exception as e:
+        return jsonify({'error': f'Error in vectorization: {e}'}), 500
+    
+    
+    # Concatenate features
+    X_parent_new = pd.DataFrame(parent_vector)
+    X_child_new = pd.DataFrame(child_vector)
+    #features = pd.concat([X_parent_new, X_child_new], axis=1)
+
+    features = pd.concat([X_parent_new, X_child_new], axis=1)
+    # Scale features
+    try:
+        features = scaler.transform(features)
+    except Exception as e:
+        return jsonify({'error': f'Error in scaling features: {e}'}), 500
+    
+    # Make a prediction
+    try:
+        prediction = model.predict(features)
+    except Exception as e:
+        return jsonify({'error': f'Error in making prediction: {e}'}), 500
+    
+    result = 'relative' if prediction[0] == 1 else 'not relative'
+    
+    return jsonify({'prediction': result})
 
 
 if __name__ == "__main__":
     application.run(debug=True)
+
