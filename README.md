@@ -3,11 +3,6 @@ Generate Lock
 pip-compile --generate-hashes --output-file=requirements-lock.txt requirements.in
 ```
 
-run local
-
-```
-flask -A local run
-```
 
 Docker 
 
@@ -20,3 +15,15 @@ docker run -p 5000:5000 0xnrous-server:latest
 python your_flask_app.py
 celery -A your_flask_app.celery worker --loglevel=info
 redis-server
+```
+
+run local (Deployed application)
+```
+# essential to install the reqirments for python dependieces 
+pip install requirements.txt
+cd app/
+python3 application.py
+```
+
+
+
