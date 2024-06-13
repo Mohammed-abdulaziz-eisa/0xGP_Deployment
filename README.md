@@ -71,5 +71,86 @@ This project provides infrastructure for deploying a machine learning model usin
    docker build -t 0xnrous-server:latest .
    docker run -p 5000:5000 0xnrous-server:latest
    ```
+3. **Essential Commands for Last Session**:
+   ```bash
+    python your_flask_app.py
+    celery -A your_flask_app.celery worker --loglevel=info
+    redis-server
+   ```
+
+#### For Windows Users
+
+1. **Install CMake**:
+   ```bash
+   cmake --version
+
+    # Install if not found
+    Invoke-WebRequest -Uri "https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-windows-x86_64.msi" -OutFile "cmake-3.26.4-windows-x86_64.msi"
+
+    # Open 0xGP Deployment and install CMake using GUI
+   ```
+
+2. **Setup Environment Paths**:
+   ```bash
+   $env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin"
+   $env:Path += ";C:\Program Files\CMake\bin"
+   ```
+
+3. **Build Project**:
+
+   ```bash
+   mkdir build
+   cd build 
+   cmake ..
+   cmake --build . --config Release
+   cmake --version
+   ```
+
+4. **Setup Virtual Environment and Install Requirements**:
+
+   ```bash
+    python -m venv .venv
+    .venv\Scripts\activate
+    python -m pip install --upgrade pip
+
+    pip install -r requirements.txt
+   ```
 
 
+#### 💻 Running the Application
+
+##### Locally
+
+
+1. **Install Requirements**:
+
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+2. **Run Application**:
+
+   ```bash
+   python application.py
+   ```
+
+3. **Access the Application**:
+Open your browser and navigate to [http://localhost:5000](http://localhost:5000).
+
+
+##### Using Docker
+
+**Build and Run Docker Image**:
+
+   ```bash
+   docker build -t 0xnrous-server:latest .
+   docker run -p 5000:5000 0xnrous-server:latest
+   ```
+## 📚 API Documentation
+
+For detailed API documentation, please refer to the Postman collection: [0xGP API Documentation](https://documenter.getpostman.com/view/33483536/2sA3JT4Jzn).
+
+
+## 📜 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
