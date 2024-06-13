@@ -305,15 +305,34 @@ def missing():
 # case 4 : DNA Paternity Test
 ##########################################################################################################
 
-
 # flask_app/
 # │
 # ├── models/
 # │   ├── random_forest_model.pkl
 # │   └── tfidf_vectorizer.pkl
 # ├   └── scaler.pkl
-# ├── app.py
+# ├── app/
+# │     └── application.py
+# │
+# ├── templates/
+# │     └── compare.html
+# │     └── index.html
+# │     └── missing.html
+# │     └── predict.html
+# │     └── result.html
+# │
+# ├── .dockerignore
+# ├── .gitignore
+# ├── .dockerignore
+# ├── Dockerfile
+# ├── gunicorn_config.py 
+# ├── gunicorn.sh
+# ├── Procfile
+# ├── README.md
+# ├── Dockerfile
+# ├── requirements-dev.in 
 # └── requirements.txt
+
 
 def pickle_deserialize_object(file_path_name):
     """
@@ -336,8 +355,6 @@ def pickle_deserialize_object(file_path_name):
         print(f"Error occurred while deserializing object: {e}")
         tb.print_exc()
     return data_object
-#####
-
 # Load models and vectorizers at startup
 try:
     vectorizer = pickle_deserialize_object("../models/vectorizer.pkl")
@@ -365,9 +382,6 @@ def bag_of_words(word_column, word_ngram):
 
 def generate_k_mers(sequence, k):
     return [sequence[i:i+k] for i in range(len(sequence)-k+1)]
-
-
-
 @application.route('/predict', methods=['GET'])
 def home():
     return render_template('predict.html')
@@ -405,8 +419,6 @@ def predict():
         child_vector = vectorizer.transform([child_kmers]).toarray()
     except Exception as e:
         return jsonify({'error': f'Error in vectorization: {e}'}), 500
-    
-    
     # Concatenate features
     X_parent_new = pd.DataFrame(parent_vector)
     X_child_new = pd.DataFrame(child_vector)
@@ -418,16 +430,12 @@ def predict():
         features = scaler.transform(features)
     except Exception as e:
         return jsonify({'error': f'Error in scaling features: {e}'}), 500
-    
     # Make a prediction
     try:
         prediction = model.predict(features)
     except Exception as e:
-        return jsonify({'error': f'Error in making prediction: {e}'}), 500
-    
+        return jsonify({'error': f'Error in making prediction: {e}'}), 500 
     result = 'relative' if prediction[0] == 1 else 'not relative'
-    
-    
     if result == 'relative':
         return jsonify({
             'prediction': result,
@@ -440,8 +448,6 @@ def predict():
             "message": "Successful Prediction",
             "statusCode": 200,
         })
-
-
 if __name__ == "__main__":
     application.run(debug=True)
 
