@@ -204,8 +204,9 @@ def identify():
         })
     else:
         response = jsonify({
-            "message": "No matches found.",
-            "statusCode": 400
+            "message": "Successful identification",
+            "match_status": "DNA NOT MATCH",
+            "statusCode": 200
         })
 
     # Set the connection header to keep-alive
@@ -426,7 +427,19 @@ def predict():
     
     result = 'relative' if prediction[0] == 1 else 'not relative'
     
-    return jsonify({'prediction': result})
+    
+    if result == 'relative':
+        return jsonify({
+            'prediction': result,
+            "message": "Successful Prediction",
+            "statusCode": 200,
+        })
+    else :
+        return jsonify({
+            'prediction': result,
+            "message": "Successful Prediction",
+            "statusCode": 200,
+        })
 
 
 if __name__ == "__main__":
