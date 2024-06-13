@@ -1,101 +1,75 @@
-## 0xGP Deployment infrastructure for Mac users 
+# 🛠️ 0xGP Deployment
 
-Generate Lock 
+This project provides infrastructure for deploying a machine learning model using Flask, Docker, and Celery, tailored for both Mac and Windows users.
+
+## 📋 Table of Contents
+
+- [🛠️ 0xGP Deployment](#️-0xgp-deployment)
+  - [📋 Table of Contents](#-table-of-contents)
+  - [🗂️ Project Structure](#️-project-structure)
+  - [🚀 Getting Started](#-getting-started)
+    - [🔧 Prerequisites](#-prerequisites)
+    - [📦 Installation and Setup](#-installation-and-setup)
+      - [For Mac Users](#for-mac-users)
+      - [For Windows Users](#for-windows-users)
+  - [💻 Running the Application](#-running-the-application)
+    - [Locally](#locally)
+    - [Using Docker](#using-docker)
+  - [📚 API Documentation](#-api-documentation)
+  - [📜 License](#-license)
+
+## 🗂️ Project Structure
+
 ```
-pip-compile --generate-hashes --output-file=requirements-lock.txt requirements.in
-```
-
-
-Docker 
-
-```
-docker build -t 0xnrous-server:latest .
-docker run -p 5000:5000 0xnrous-server:latest
-
-
-# essential for last session to work
-python your_flask_app.py
-celery -A your_flask_app.celery worker --loglevel=info
-redis-server
-```
-
-run local (Deployed application)
-```
-# essential to install the reqirments for python dependieces 
-pip install requirements.txt
-cd app/
-python3 application.py
-```
-
-
-
-## 0xGP Deployment infrastructure for Windows users 
-
-## run local (Deployed application)
-```
-## in program_files in C disk should have CMake and Python3 installed
-## open vscode and command prompt and run the following commands
-
-cmake --version
-
-#### install it if it's not founded using command 
-
-Invoke-WebRequest -Uri "https://github.com/Kitware/CMake/releases/download/v3.26.4/cmake-3.26.4-windows-x86_64.msi" -OutFile "cmake-3.26.4-windows-x86_64.msi"
-
-# open 0xGP Deployment and install cmkae using GUI 
-$env:Path += ";C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin"
-$env:Path += ";C:\Program Files\CMake\bin"
-# open 0xGP Deployment  again if you not in this path 
-mkdir build
-cd build
-cmake ..
-cmake --build . --config Release
-cmake --version
+0xGP_Deployment/
+├── models/
+│   ├── random_forest_model.pkl
+│   ├── tfidf_vectorizer.pkl
+│   └── scaler.pkl
+├── app/
+│   └── application.py
+├── templates/
+│   ├── compare.html
+│   ├── index.html
+│   ├── missing.html
+│   ├── predict.html
+│   └── result.html
+├── .dockerignore
+├── .gitignore
+├── Dockerfile
+├── gunicorn_config.py
+├── gunicorn.sh
+├── Procfile
+├── README.md
+├── requirements-dev.in
+└── requirements.txt
 ```
 
 
+## 🚀 Getting Started
 
-#### Step 2 : Setup virtual enviroment for python (requirements)
-```
-# in vscode open command prompt and run the following commands but in 0xGP Deployment folder 
+### 🔧 Prerequisites
 
-python -m venv .venv
+- **Python 3**
+- **Docker**
+- **Redis**
+- **Flask**
+- **Celery**
+- **Postman (for API testing)**
 
-.venv\Scripts\activate
+### 📦 Installation and Setup
 
-python -m pip install --upgrade pip
+#### For Mac Users
 
-pip install numpy pandas matplotlib scikit-learn jupyter
+1. **Generate Lock File**:
+   ```bash
+   pip-compile --generate-hashes --output-file=requirements-lock.txt requirements.in
+   ```
 
-pip install biopython
-
-pip install Flask
-
-pip install joblib
-
-pip install lightgbm
-
-pip install requests
-
-pip install scipy
-
-```
-
-
-
-#### Step 3 : Run application in localhost 
-
-```
-# in vscode open command prompt and run make sure u are in 0xGP Deployment folder (prject folder using cd command) :dir 
-
-cd app/
-
-python3 application.py
-```
-
-#### now you can open http://localhost:5000 in browser 
-
-
-## For Postman test documentation : [Link](https://documenter.getpostman.com/view/33483536/2sA3JT4Jzn)
+2. **Build Docker Image**:
+   ```bash
+   docker build -t 0xnrous-server:latest .
+   docker run -p 5000:5000 0xnrous-server:latest
+   ```
 
 
