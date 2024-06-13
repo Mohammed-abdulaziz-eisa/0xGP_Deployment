@@ -119,7 +119,7 @@ This project provides infrastructure for deploying a machine learning model usin
 
 #### 💻 Running the Application
 
-##### Locally
+#### Locally
 
 
 1. **Install Requirements**:
@@ -138,7 +138,7 @@ This project provides infrastructure for deploying a machine learning model usin
 Open your browser and navigate to [http://localhost:5000](http://localhost:5000).
 
 
-##### Using Docker
+#### Using Docker
 
 **Build and Run Docker Image**:
 
