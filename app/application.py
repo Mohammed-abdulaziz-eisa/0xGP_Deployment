@@ -287,18 +287,25 @@ def missing():
         else:
             return jsonify({
                 "main_match_info": match_info,
-                "potential_relative_info": [{
-                    "message": "No matching child found",
-                    "statusCode": 404
-                }],
+                "potential_relative_info": None,
                 "message": "Successful identification",
                 "statusCode": 200
             })
-    else:
+    elif not potential_children_info and not match_info:
         return jsonify({
+            "main_match_info": None,
+            "potential_relative_info": None,
             "message": "No match found.",
-            "statusCode": 404
+            "statusCode": 200
         }), {'Connection': 'keep-alive'}
+        
+    else: 
+            return jsonify({
+                "main_match_info": None,
+                "potential_relative_info": potential_children_info,
+                "message": "Founded a potential relative.",
+                "statusCode": 200
+            }), {'Connection': 'keep-alive'}
 
 
 ##########################################################################################################
