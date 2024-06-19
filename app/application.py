@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, Flask
+from flask import render_template, request, jsonify, Flask
 from typing import Tuple, Dict, Any
 from Bio import pairwise2
 import requests
@@ -119,7 +119,7 @@ def compare():
 # Define a generator function to periodically send data to keep the connection alive
 @application.route('/identify')
 def result():
-    return render_template('result.html')
+    return render_template('identify.html')
 
 @application.route('/identify', methods=['POST'])
 def identify():
@@ -312,33 +312,6 @@ def missing():
 # case 4 : DNA Paternity Test
 ##########################################################################################################
 
-# flask_app/
-# │
-# ├── models/
-# │   ├── random_forest_model.pkl
-# │   └── tfidf_vectorizer.pkl
-# ├   └── scaler.pkl
-# ├── app/
-# │     └── application.py
-# │
-# ├── templates/
-# │     └── compare.html
-# │     └── index.html
-# │     └── missing.html
-# │     └── predict.html
-# │     └── result.html
-# │
-# ├── .dockerignore
-# ├── .gitignore
-# ├── .dockerignore
-# ├── Dockerfile
-# ├── gunicorn_config.py 
-# ├── gunicorn.sh
-# ├── Procfile
-# ├── README.md
-# ├── Dockerfile
-# ├── requirements-dev.in 
-# └── requirements.txt
 
 
 def pickle_deserialize_object(file_path_name):
