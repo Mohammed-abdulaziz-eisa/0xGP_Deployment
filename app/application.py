@@ -1,49 +1,82 @@
+# Import necessary libraries
+
+# Flask related imports
 from flask import render_template, request, jsonify, Flask
-from typing import Tuple, Dict, Any
+
+# Bioinformatics related imports
 from Bio import pairwise2
+
+# HTTP requests
 import requests
-#import awsgi
-# from flask import Flask, request, jsonify
-import pickle
-import numpy as np
+
+# Data processing and machine learning imports
 import pandas as pd
 from sklearn.preprocessing import MaxAbsScaler
 from sklearn.feature_extraction.text import CountVectorizer
 import lightgbm as lgb
-import joblib
-import os
-from scipy.sparse import hstack
+
+# Sparse matrices and serialization
 import pickle as pkl
+
+# Error handling and threading
 import traceback as tb
 import threading
 import time
 
+
 application = Flask(__name__, template_folder='../templates', static_folder='../static')
-API_URL = 'https://dna-testing-system.onrender.com/api/EisaAPI'
+API_URL = 'https://dna-testing-system-jl95.onrender.com/api/EisaAPI'
 
 def needleman_wunsch_similarity(seq1, seq2, match_score=3, mismatch_penalty=-1, gap_penalty=-2):
     alignments = pairwise2.align.globalms(seq1, seq2, match_score, mismatch_penalty, gap_penalty, gap_penalty)
+    """
+    Calculates the similarity score between two sequences using the Needleman-Wunsch algorithm.
+
+    Parameters:
+        seq1 (str): First DNA sequence.
+        seq2 (str): Second DNA sequence.
+        match_score (int, optional): Score for matches. Defaults to 3.
+        mismatch_penalty (int, optional): Penalty for mismatches. Defaults to -1.
+        gap_penalty (int, optional): Penalty for gaps. Defaults to -2.
+
+    Returns:
+        float: Similarity score between the two sequences.
+    """
     if not alignments:
         return 0.0
-    best_alignment = alignments[0]
-    alignment_score = best_alignment[2]
-    max_score = max(len(seq1), len(seq2)) * match_score
-    similarity_score = alignment_score / max_score
-    return similarity_score
+    best_alignment = alignments[0] # Highest score alignment 
+    alignment_score = best_alignment[2]  # Score of the best alignment
+    max_score = max(len(seq1), len(seq2)) * match_score  # Score of the maximum alignment
+    similarity_score = alignment_score / max_score  # Calculate the similarity score
+    # Return the similarity score
+    return similarity_score 
+
+
 
 def retrieve_dna_sequence_from_file(file, max_length=2000):
+    """
+    Retrieves DNA sequence data from a file, respecting a maximum length constraint.
+    
+    Parameters:
+        file (file object): A file object containing DNA sequence data.
+        max_length (int, optional): The maximum length of DNA sequence to retrieve. Defaults to 2000.
+    Returns:
+        str: DNA sequence data extracted from the file, truncated to `max_length` if necessary.
+    """
     data = b''  # Initialize as bytes
     total_length = 0
+    # Read the file line by line
     for line in file:
-        line = line.strip()
-        if line.startswith(b'>'):  # Compare with byte string
-            continue  # Skip header lines
+        line = line.strip()  # Remove leading/trailing whitespace
+        if line.startswith(b'>'):   # Check if the line is a header line (starts with '>')
+            continue 
         remaining_length = max_length - total_length
         if remaining_length <= 0:
             break  # Exit loop if the limit is reached
+        # Append data to the byte string, truncating if necessary
         data += line[:remaining_length]
-        total_length += min(len(line), remaining_length)
-    return data.decode()  # Decode the result back to string
+        total_length += min(len(line), remaining_length)    # Update the total length
+    return data.decode()  # Decode the byte string to a regular string and return it
 
 def retrieve_api_data(API_URL):
     try:
@@ -71,10 +104,8 @@ def worker():
 @application.route('/')
 def home_page():
     return render_template('index.html')
-        
-##########################################################################################################
-# case 1 : DNA Sequence Comparison
-##########################################################################################################
+
+# Compare page
 
 @application.route('/compare')
 def compare_page():
@@ -111,11 +142,6 @@ def compare():
         "statusCode": 200
     })
 
-
-##########################################################################################################
-# case 2 : DNA Sequence Identification-
-##########################################################################################################
-
 # Define a generator function to periodically send data to keep the connection alive
 @application.route('/identify')
 def result():
@@ -147,10 +173,8 @@ def identify():
             "message": api_data['error'],
             "statusCode": 401
         }), {'Connection': 'keep-alive'}
-
     # Retrieve DNA sequence from the uploaded file
     sequence_a = retrieve_dna_sequence_from_file(file_a, max_length=2000)
-
     # Initialize variables for match information
     matches = []
     similarity_threshold = 1  # Threshold for similarity score (e.g., 99%)
@@ -169,7 +193,8 @@ def identify():
             valid_statuses = ['missing', 'acknowledged', 'crime', 'disaster']
             if selected_status not in valid_statuses:
                 return jsonify({
-                    "message": "Invalid status. Please select one of: 'missing', 'acknowledged', 'crime', 'disaster' or 'all' to search in all database.",
+                    "message":
+                        "Invalid status. Please select one of: 'missing', 'acknowledged', 'crime', 'disaster' or 'all' to search in all database.",
                     "statusCode": 400
                 }), {'Connection': 'keep-alive'}
             filtered_data = [entry for entry in api_data['population'] if entry.get('status') == selected_status]
@@ -186,13 +211,10 @@ def identify():
                 if similarity_score == similarity_threshold:
                     # Extract match information
                     match_info = {key: entry[key] for key in info_keys if key in entry}
-                    #match_info["similarity_percentage"] = similarity_percentage
-                    #match_info["match_status"] = "DNA MATCH"
                     matches.append(match_info)
                     if similarity_percentage == 100:
                         # Stop the search if a perfect match is found
                         break
-
     # Check if there are any matches found
     if matches:
         response = jsonify({
@@ -208,16 +230,9 @@ def identify():
             "match_status": "DNA NOT MATCH",
             "statusCode": 200
         })
-
     # Set the connection header to keep-alive
     response.headers['Connection'] = 'keep-alive'
     return response
-
-
-
-##########################################################################################################
-# case 3 : DNA Sequence Missing 
-##########################################################################################################
 
 @application.route('/missing', methods=['GET', 'POST'])
 def missing():
@@ -251,6 +266,8 @@ def missing():
                  'address', 'national_id', 'phone', 'gender', 'birthdate', 'bloodType']
     SIMILARITY_THRESHOLD = 100
     SIMILARITY_THRESHOLD_CHILD = 96
+    
+    
     if isinstance(api_data, dict) and 'population' in api_data:
         for entry in api_data['population']:
             if 'DNA_sequence' in entry:
@@ -264,13 +281,11 @@ def missing():
                     match_info = {key: entry[key] for key in info_keys if key in entry}
                     match_info["similarity_percentage"] = similarity_percentage
                     match_info["match_status"] = "DNA MATCH"
-                    #break  # Stop search if a perfect match is found
-
+                   
                 if similarity_percentage >= SIMILARITY_THRESHOLD_CHILD :
                     child_info = {key: entry[key] for key in info_keys if key in entry}
                     potential_children_info.append({
                         "relative_data": child_info
-                        #"similarity_percentage_relative": similarity_percentage
                     })
 
     if match_info:
@@ -307,11 +322,40 @@ def missing():
                 "statusCode": 200
             }), {'Connection': 'keep-alive'}
 
+def pickle_deserialize_object(file_path_name):
+    """Deserializes the object from the given path"""
+    data_object = None
+    try:
+        with open(file_path_name, "rb") as data_infile:
+            data_object = pkl.load(data_infile)
+    except Exception as e:
+        print(f"Error occurred while deserializing object: {e}")
+        tb.print_exc()
+    return data_object
+# Load models and vectorizers at startup
+try:
+    vectorizer = pickle_deserialize_object("../models/vectorizer.pkl")
+    model = pickle_deserialize_object("../models/finalized_model_lgb.pkl")
+    scaler = pickle_deserialize_object("../models/scaler.pkl")
+except Exception as e:
+    print(f"Error loading model/vectorizer: {e}")
 
-##########################################################################################################
-# case 4 : DNA Paternity Test
-##########################################################################################################
+#Helper functions from doctor bonat script 
+def k_mer_words_original(dna_sequence_string, k_mer_length=7):
+    return [dna_sequence_string[x:x + k_mer_length].lower() for x in range(len(dna_sequence_string) - k_mer_length + 1)]
 
+def column_of_words(dna_data_frame, input_column_name, output_column_name):
+    dna_data_frame[output_column_name] = dna_data_frame.apply(lambda x: k_mer_words_original(x[input_column_name]), axis=1)
+    dna_data_frame = dna_data_frame.drop(input_column_name, axis=1)
+    return dna_data_frame
+
+def bag_of_words(word_column, word_ngram):
+    word_list = list(word_column)
+    for item in range(len(word_list)):
+        word_list[item] = ' '.join(word_list[item])
+    count_vectorizer = CountVectorizer(ngram_range=(word_ngram, word_ngram))
+    X = count_vectorizer.fit_transform(word_list)
+    return X
 
 
 def pickle_deserialize_object(file_path_name):
@@ -335,37 +379,13 @@ def pickle_deserialize_object(file_path_name):
         print(f"Error occurred while deserializing object: {e}")
         tb.print_exc()
     return data_object
-# Load models and vectorizers at startup
-try:
-    vectorizer = pickle_deserialize_object("../models/vectorizer.pkl")
-    model = pickle_deserialize_object("../models/finalized_model_lgb.pkl")
-    scaler = pickle_deserialize_object("../models/scaler.pkl")
-except Exception as e:
-    print(f"Error loading model/vectorizer: {e}")
 
-# Helper functions from doctor bonat script 
-def k_mer_words_original(dna_sequence_string, k_mer_length=7):
-    return [dna_sequence_string[x:x + k_mer_length].lower() for x in range(len(dna_sequence_string) - k_mer_length + 1)]
-
-def column_of_words(dna_data_frame, input_column_name, output_column_name):
-    dna_data_frame[output_column_name] = dna_data_frame.apply(lambda x: k_mer_words_original(x[input_column_name]), axis=1)
-    dna_data_frame = dna_data_frame.drop(input_column_name, axis=1)
-    return dna_data_frame
-
-def bag_of_words(word_column, word_ngram):
-    word_list = list(word_column)
-    for item in range(len(word_list)):
-        word_list[item] = ' '.join(word_list[item])
-    count_vectorizer = CountVectorizer(ngram_range=(word_ngram, word_ngram))
-    X = count_vectorizer.fit_transform(word_list)
-    return X
-
+# Helper functions from Model script 
 def generate_k_mers(sequence, k):
     return [sequence[i:i+k] for i in range(len(sequence)-k+1)]
 @application.route('/predict', methods=['GET'])
 def home():
     return render_template('predict.html')
-
 @application.route('/predict', methods=['POST'])
   
 def predict():
@@ -387,12 +407,10 @@ def predict():
 
     parent_dna = retrieve_dna_sequence_from_file(file_a)
     child_dna = retrieve_dna_sequence_from_file(file_b)
-
     # Generate k-mers
     k = 7
     parent_kmers = ' '.join(generate_k_mers(parent_dna, k))
     child_kmers = ' '.join(generate_k_mers(child_dna, k))
-    
     # Vectorize sequences
     try:
         parent_vector = vectorizer.transform([parent_kmers]).toarray()
@@ -402,8 +420,6 @@ def predict():
     # Concatenate features
     X_parent_new = pd.DataFrame(parent_vector)
     X_child_new = pd.DataFrame(child_vector)
-    #features = pd.concat([X_parent_new, X_child_new], axis=1)
-
     features = pd.concat([X_parent_new, X_child_new], axis=1)
     # Scale features
     try:
