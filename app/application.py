@@ -88,16 +88,25 @@ def retrieve_api_data(API_URL):
         dict: The API response data, or an error message if the request fails.
     """
     try:
+        # Make a GET request to the API
         response = requests.get(API_URL)
+        # Check the status code of the response
         if response.status_code == 200:
+            # return the response as a dictionary
             api_data = response.json()
+            # Check if the response is in the expected format
             if not isinstance(api_data, dict) or 'population' not in api_data:
+                # Return an error message if the response is not in the expected format or missing required keys
                 return {"error": "API response is not in the expected format."}
             else:
+                # Return the response as a dic
                 return api_data
         else:
+            # Return an error message if the response status code is not 200
             return {"error": "Failed to retrieve data from API"}
+    # Catch any exceptions 
     except Exception as e:
+        # Return an error message if the request fails    
         return {"error": str(e)}
 
 # worker 
