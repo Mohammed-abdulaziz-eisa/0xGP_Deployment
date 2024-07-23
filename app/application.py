@@ -79,6 +79,14 @@ def retrieve_dna_sequence_from_file(file, max_length=2000):
     return data.decode()  # Decode the byte string to a regular string and return it
 
 def retrieve_api_data(API_URL):
+    """
+    Retrieve data from an API.
+
+    Parameters:
+        API_URL (str): The URL of the API.
+    Returns:
+        dict: The API response data, or an error message if the request fails.
+    """
     try:
         response = requests.get(API_URL)
         if response.status_code == 200:
