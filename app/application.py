@@ -126,10 +126,27 @@ def home_page():
 
 @application.route('/compare')
 def compare_page():
+    """
+    Renders the compare page.
+
+    Parameters:
+        None.
+    """
     return render_template('compare.html')
 
 @application.route('/compare', methods=['POST'])
 def compare():
+    """
+    upload two files and compare them using the needleman_wunsch_similarity function 
+    if the files are not uploaded or if the files are empty, return an error message
+
+    Parameters:
+        None.
+        
+    Returns:
+        A JSON response with the similarity percentage, match status, and message.: dict
+        A JSON response with an error message if the files are not uploaded or if the files are empty.: dict 
+    """
     if 'file_a' not in request.files or 'file_b' not in request.files:
         return jsonify({
             "message": "Please upload a file for both DNA sequences.",
