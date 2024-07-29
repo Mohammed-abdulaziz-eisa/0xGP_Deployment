@@ -147,28 +147,32 @@ def compare():
         A JSON response with the similarity percentage, match status, and message.: dict
         A JSON response with an error message if the files are not uploaded or if the files are empty.: dict 
     """
+    # Check if 'file' parameter is provided in the request 
     if 'file_a' not in request.files or 'file_b' not in request.files:
+        # Return an error message if the files are not uploaded or if the files are empty
         return jsonify({
             "message": "Please upload a file for both DNA sequences.",
             "statusCode": 401
         })
-
+    # Request the DNA sequences from the uploaded files
     file_a = request.files['file_a']
     file_b = request.files['file_b']
-    
+    # Check if the files are empty or not provided
     if file_a.filename == '' or file_b.filename == '':
         return jsonify({
             "message": "Please upload non-empty files for both DNA sequences.",
             "statusCode": 401
         })
-
+    # Retrieve the DNA sequences from the uploaded files
     sequence_a = retrieve_dna_sequence_from_file(file_a)
     sequence_b = retrieve_dna_sequence_from_file(file_b)
-
+    # Compare the sequences using the needleman_wunsch_similarity function
     similarity_score = needleman_wunsch_similarity(sequence_a, sequence_b)
+    # Calculate the similarity percentage
     similarity_percentage = round(similarity_score * 100)
+    # Determine the match status based on the similarity score. 
     match_status = "DNA MATCH" if similarity_score == 1 else "DNA Not MATCH"  # Adjust threshold as needed
-
+    # Return a JSON response with the similarity percentage, match status, and message
     return jsonify({
         "similarity_percentage": similarity_percentage,
         "match_status": match_status,
