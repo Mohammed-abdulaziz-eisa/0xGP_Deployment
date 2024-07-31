@@ -187,8 +187,21 @@ def result():
 
 @application.route('/identify', methods=['POST'])
 def identify():
+    """
+    Upload a file containing DNA sequences and identify matches from an API data set
+    using the needleman_wunsch_similarity function. The comparison is based on a 
+    similarity threshold.
+
+    Parameters:
+        None.
+
+    Returns:
+        A JSON response with match information, similarity percentage, match status, and a message: dict
+        A JSON response with an error message if the file is not uploaded or if the file is empty: dict
+    """
     # Check if 'file' parameter is provided in the request
     if 'file' not in request.files:
+        # Return an error message if the file is not uploaded 
         return jsonify({
             "message": "Please upload a file of DNA sequences.",
             "statusCode": 401
@@ -197,51 +210,56 @@ def identify():
     # Get the uploaded file from the form
     file_a = request.files['file']
     if file_a.filename == '':
+        # Return an error message if the file is empty 
         return jsonify({
             "message": "Please upload a non-empty file for the DNA sequence.",
             "statusCode": 401
         }), {'Connection': 'keep-alive'}
-
+    # Get the selected status from the form 
     selected_status = request.form.get('status')
 
     # Retrieve API data
     api_data = retrieve_api_data(API_URL)
+    # Check if API data is a dictionary and contains 'population' key
     if 'error' in api_data:
+        # Return an error message if the API data is not a dictionary or does not contain 'poplation' key 
         return jsonify({
             "message": api_data['error'],
             "statusCode": 401
         }), {'Connection': 'keep-alive'}
-    # Retrieve DNA sequence from the uploaded file
+    # Retrieve DNA sequence from the uploaded file with a maximum length of 2000 bases
     sequence_a = retrieve_dna_sequence_from_file(file_a, max_length=2000)
     # Initialize variables for match information
     matches = []
-    similarity_threshold = 1  # Threshold for similarity score (e.g., 99%)
+    similarity_threshold = 1  # Threshold for similarity score (100% match)
     match_status = "No match found"
 
-    # Extract necessary keys for match information
+    # Extract necessary keys for match information from API data
     info_keys = ['name', 'status', 'description', 'createdAt', 'updatedAt', 
                  'address', 'national_id', 'phone', 'gender', 'birthdate', 'bloodType']
 
     # Check if API data is a dictionary and contains 'population' key
     if isinstance(api_data, dict) and 'population' in api_data:
-        # Filter API data based on selected status
         if selected_status == 'all':
             filtered_data = api_data['population']
-        else:
+        else:   
+            # Extract filtered data based on selected status
             valid_statuses = ['missing', 'acknowledged', 'crime', 'disaster']
             if selected_status not in valid_statuses:
+                # Return an error message if selected status is not valid
                 return jsonify({
                     "message":
                         "Invalid status. Please select one of: 'missing', 'acknowledged', 'crime', 'disaster' or 'all' to search in all database.",
                     "statusCode": 400
                 }), {'Connection': 'keep-alive'}
+            # Filter API data based on selected status
             filtered_data = [entry for entry in api_data['population'] if entry.get('status') == selected_status]
-
+        # Iterate over filtered data and compare each entry's DNA sequence with the uploaded sequence
         for entry in filtered_data:
             if 'DNA_sequence' in entry:
-                # Retrieve DNA sequence for comparison
+                # Retrieve DNA sequence for comparison, truncated to 2000 bases
                 sequence_b = entry['DNA_sequence'][:2000]
-                # Calculate similarity score
+                # Calculate similarity score between the two sequences
                 similarity_score = needleman_wunsch_similarity(sequence_a, sequence_b)
                 similarity_percentage = round(similarity_score * 100)
                 print(f"Comparing with {entry.get('name', 'unknown')} - Similarity Score: {similarity_score}, Similarity Percentage: {similarity_percentage}%")
@@ -253,7 +271,7 @@ def identify():
                     if similarity_percentage == 100:
                         # Stop the search if a perfect match is found
                         break
-    # Check if there are any matches found
+    # Check if there are any matches found and return the response as JSON
     if matches:
         response = jsonify({
             "matches": match_info,
@@ -263,6 +281,7 @@ def identify():
             "statusCode": 200
         })
     else:
+        # Return an message if no matches are found or the similarity score does not meet the threshold
         response = jsonify({
             "message": "Successful identification",
             "match_status": "DNA NOT MATCH",
