@@ -293,9 +293,26 @@ def identify():
 
 @application.route('/missing', methods=['GET', 'POST'])
 def missing():
+    """
+    Handles the upload and analysis of missing DNA sequence file to identify the potential matches or relatives
+    in a given population database. It processes the uploaded file, compares the DNA sequence with the entries 
+    in database and return a JSON response with the match information of comparison. 
+    
+    Workflow:
+    - For Get request, renders the 'missing.html' template.
+    - For Post request, retrieves the uploaded file and compares the DNA sequence with the entries in database.
+
+    Parameters: 
+        None
+
+    Returns:
+        JSON response: dict containing information about the main DNA match, potential relatives, 
+                    and status messages indicating the outcome of the operation.
+    """
+    # Handle GET request
     if request.method == 'GET':
         return render_template('missing.html')
-
+    # Check if file part is  in the request
     if 'file' not in request.files:
         return jsonify({
             "message": "Please upload a file of DNA sequences.",
@@ -303,52 +320,62 @@ def missing():
         }), {'Connection': 'keep-alive'}
 
     file_a = request.files['file']
+    # Check if the uploaded file is not empty 
     if file_a.filename == '':
         return jsonify({
             "message": "Please upload a non-empty file for the DNA sequence.",
             "statusCode": 401
         }), {'Connection': 'keep-alive'}
-
+    # Retrieve the DNA sequence from the uploaded file 
     sequence_a = retrieve_dna_sequence_from_file(file_a, max_length=2000)
+    # Retrieve API data 
     api_data = retrieve_api_data(API_URL)
+    # Handle API error response
     if 'error' in api_data:
         return jsonify({
             "message": api_data['error'],
             "statusCode": 401
         }), {'Connection': 'keep-alive'}
 
-    match_info = {}
-    potential_children_info = []
+    match_info = {} # Dictionary to hold information of exact DNA match 
+    potential_children_info = []  # List to hold information of potential relatives - Childern
+    
+    # Keys for extracting relevant information from the API data 
     info_keys = ['name', 'status', 'description', 'createdAt', 'updatedAt', 
                  'address', 'national_id', 'phone', 'gender', 'birthdate', 'bloodType']
+    
+    # Thresholds for determining similarity
     SIMILARITY_THRESHOLD = 100
     SIMILARITY_THRESHOLD_CHILD = 96
     
-    
+    # Check if the API data contains a population
     if isinstance(api_data, dict) and 'population' in api_data:
         for entry in api_data['population']:
             if 'DNA_sequence' in entry:
+                # Compare the DNA sequence with the uploaded sequence
                 sequence_b = entry['DNA_sequence'][:2000]
                 similarity_score = needleman_wunsch_similarity(sequence_a, sequence_b)
                 similarity_percentage = round(similarity_score * 100)
 
                 print(f"Comparing with {entry.get('name', 'unknown')} - Similarity Score: {similarity_score}, Similarity Percentage: {similarity_percentage}%")
 
+                # check for an exact match 
                 if similarity_percentage == SIMILARITY_THRESHOLD:
                     match_info = {key: entry[key] for key in info_keys if key in entry}
                     match_info["similarity_percentage"] = similarity_percentage
                     match_info["match_status"] = "DNA MATCH"
-                   
+                
+                # check for potential child or relative
                 if similarity_percentage >= SIMILARITY_THRESHOLD_CHILD :
                     child_info = {key: entry[key] for key in info_keys if key in entry}
                     potential_children_info.append({
                         "relative_data": child_info
                     })
-
+    # Prepare the response based on the matching information 
     if match_info:
         main_national_id = match_info.get("national_id")
         potential_children_info = [child for child in potential_children_info if child["relative_data"].get("national_id") != main_national_id]
-
+        
         if potential_children_info:
             return jsonify({
                 "main_match_info": match_info,
